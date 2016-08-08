@@ -22,7 +22,7 @@ namespace :deploy do
         end
         xml << "</text></wiki_page>"
         execute "echo \"#{xml}\" > #{current_path}/revisions.xml"
-        execute "curl -v -H 'Content-Type: application/xml' -X PUT --data-binary '@#{current_path}/revisions.xml' -H 'X-Redmine-API-Key: #{fetch(:redmine_api_key}' #{fetch(:redmine_wiki_xml_url)" 
+        execute "curl -v -H 'Content-Type: application/xml' -X PUT --data-binary '@#{current_path}/revisions.xml' -H 'X-Redmine-API-Key: #{fetch(:redmine_api_key)}' #{fetch(:redmine_wiki_xml_url)}" 
       end
     end
   end

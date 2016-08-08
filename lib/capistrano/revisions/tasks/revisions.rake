@@ -6,8 +6,8 @@ namespace :deploy do
   task :revisions => "deploy:revisions:create"
 
   namespace :revisions do
-    task :create => :setup do
-      on roles fetch(:web) do |host|
+    task :create do
+      on roles(:web) do |host|
         revision = capture "cat #{current_path}/REVISION"
         run_locally do
           git_log = capture "git log #{revision}..master --pretty=format:'%ad %an %h  %s' --date=short"
@@ -16,9 +16,8 @@ namespace :deploy do
         execute "echo #{fetch(:git_log)} >> #{current_path}/revisions.txt"
         xml = "<?xml version='1.0'?><wiki_page><text>"
         capture("cat #{current_path}/revisions.txt").each_line do |line|
-          xml << "# "
+          xml << '&#xA; # '
           xml << line
-          xml << "&#xD;&#xA;"
         end
         xml << "</text></wiki_page>"
         execute "echo \"#{xml}\" > #{current_path}/revisions.xml"

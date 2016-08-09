@@ -44,9 +44,10 @@ namespace :deploy do
       revisions_xml.write("<text>\n")
       capture("cat #{shared_path}/log/revisions.txt").each_line do |line|
         if line.match(/^\d{2}-\d{2}-\d{4}$/)
-          revisions_xml.write("h2. #{line} \n\n")
+          revisions_xml.write("\n")
+          revisions_xml.write("h2. #{line} \n")
         else
-          revisions_xml.write("# #{line} \n")
+          revisions_xml.write("# #{line}")
         end
       end
       revisions_xml.write("</text>\n")

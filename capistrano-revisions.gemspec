@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["maverick"]
   spec.email         = ["maverick@ekohe.com"]
   spec.summary       = %q{Provide deploy:revisions task to Capistrano 3.}
-  spec.description   = %q{Provide deploy:revisions task to Capistrano 3 to append commit logs to a Redmine Wiki page.}
+  spec.description   = %q{Provide deploy:revisions task to Capistrano 3 to append commit logs to a Redmine Wiki page and notify via email.}
   spec.homepage      = "https://github.com/maverick9000/capistrano-revisions"
   spec.license       = "MIT"
 

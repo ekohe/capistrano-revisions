@@ -15,7 +15,7 @@ Set your configuration variables in deploy.rb
 
     set :redmine_api_key, 'XXXXXXXXXXXX'
     set :redmine_wiki_xml_url, 'https://redmine.com/projects/project_name/revisions.xml'
-    set :revisions_email, 'user@email.com' #who will receive the notification emails
+    set :revision_email, 'user@email.com' #who will receive the notification emails
 
 And then execute:
 

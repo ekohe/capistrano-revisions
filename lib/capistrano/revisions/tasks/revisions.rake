@@ -22,7 +22,8 @@ namespace :deploy do
         git_log = capture "git log #{revision}..master --pretty=format:'%ad %an %h  %s' --date=short"
         set :git_log, git_log
       end
-      execute "echo '#{fetch(:git_log)}' >> #{shared_path}/log/revisions.txt"
+      execute "echo '#{Time.now.strftime('%d-%m-%Y')}' >> #{shared_path}/log/revisions.txt"
+      execute "#{fetch(:git_log)} >> #{shared_path}/log/revisions.txt"
     end
 
     def send_email
@@ -33,7 +34,6 @@ namespace :deploy do
       email_content << "</ol>"
       email_content << "You can view the entire history <a href='#{fetch(:redmine_wiki_xml_url).gsub('.xml','')}'>here</a>"
       execute "echo '#{email_content}' | mail -a 'Content-type: text/html;' -s 'Deployment Notifier: #{fetch(:application)} has just been deployed' #{fetch(:revision_email)}"
-      execute "echo '#{Time.now.strftime('%d-%m-%Y')}' >> #{shared_path}/log/revisions.txt"
     end
 
     def create_revisions_history_xml_file

@@ -1,5 +1,5 @@
 module Capistrano
   module Revisions
-    VERSION = "0.7"
+    VERSION = "0.8"
   end
 end

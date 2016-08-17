@@ -23,17 +23,27 @@ namespace :deploy do
         set :git_log, git_log
       end
       execute "echo '#{Time.now.strftime('%d-%m-%Y')}' >> #{shared_path}/log/revisions.txt"
-      execute "#{fetch(:git_log)} >> #{shared_path}/log/revisions.txt"
+      fetch(:git_log).split("\n").each do |commit|
+        execute "echo -e \"#{commit}\" >> #{shared_path}/log/revisions.txt"
+      end
     end
 
     def send_email
-      email_content = "Commits in this deployment:<ol>"
+      create_email_file
+      execute "cat #{shared_path}/log/revisions_email.txt | mail -a 'Content-type: text/html;' -s 'Deployment Notifier: #{fetch(:application)} has just been deployed' #{fetch(:revision_email)}"
+    end
+
+    def create_email_file
+      revisions_email = File.open("tmp/revisions_email.txt",'w')
+      revisions_email.truncate(0)
+      revisions_email.write("Commits in this deployment:<ol>")
       fetch(:git_log).each_line do |line|
-        email_content << "<li>#{line}</li>"
+        revisions_email.write("<li>#{line}</li>")
       end
-      email_content << "</ol>"
-      email_content << "You can view the entire history <a href='#{fetch(:redmine_wiki_xml_url).gsub('.xml','')}'>here</a>"
-      execute "echo '#{email_content}' | mail -a 'Content-type: text/html;' -s 'Deployment Notifier: #{fetch(:application)} has just been deployed' #{fetch(:revision_email)}"
+      revisions_email.write("</ol>")
+      revisions_email.write("Full deployment <a href=\"#{fetch(:redmine_wiki_xml_url).gsub('.xml','')}\">history</a>")
+      revisions_email.close
+      upload! "tmp/revisions_email.txt", "#{shared_path}/log/revisions_email.txt"
     end
 
     def create_revisions_history_xml_file

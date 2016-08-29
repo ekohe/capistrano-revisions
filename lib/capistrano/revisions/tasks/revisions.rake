@@ -1,7 +1,6 @@
 namespace :deploy do
   desc <<-DESC
-    1. Creates a Redmine Wiki page which displays the commits since your last deploy.
-    2. Notifies via email of commits since your last deploy.
+    Track and notify about changes to deployment history
   DESC
   task :revisions => "deploy:revisions:create"
 

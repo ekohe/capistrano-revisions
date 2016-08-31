@@ -12,22 +12,21 @@ namespace :deploy do
         XML_TMP_FILE_PATH = "tmp/revisions_#{fetch(:cr_env)}.xml"
         EMAIL_FILE_PATH = "#{shared_path}/log/revisions_email_#{fetch(:cr_env)}.html"
         EMAIL_TMP_FILE_PATH = "tmp/revisions_email_#{fetch(:cr_env)}.html"
-        create_revisions_history_file
-        send_email
-        create_revisions_history_xml_file
-        create_redmine_wiki_from_xml_file
+        begin
+          create_revisions_history_file
+          send_email
+          create_revisions_history_xml_file
+          create_redmine_wiki_from_xml_file
+        rescue
+          puts "Error: failed to create revision notification"
+        end
       end
     end
 
     def create_revisions_history_file
       revision = capture "cat #{current_path}/REVISION"
       run_locally do
-        begin
-          git_log = capture "git log #{revision}..#{fetch(:cr_branch)} --pretty=format:'%ad %an %h  %s' --date=short"
-        rescue
-          puts "INFO: No commits to deploy"
-          exit
-        end
+        git_log = capture "git log #{revision}..#{fetch(:cr_branch)} --pretty=format:'%ad %an %h  %s' --date=short"
         set :git_log, git_log
       end
       execute "[[ -f #{TXT_FILE_PATH} ]] || echo -e '#{fetch(:cr_env).capitalize} deployment history' > #{TXT_FILE_PATH}"

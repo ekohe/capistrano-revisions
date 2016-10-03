@@ -70,7 +70,7 @@ namespace :deploy do
           revisions_xml.write("\n")
           revisions_xml.write("h2. #{line} \n")
         else
-          revisions_xml.write("# #{line}")
+          revisions_xml.write("# #{line.gsub('&','&#038;')}")
         end
       end
       revisions_xml.write("</text>\n")

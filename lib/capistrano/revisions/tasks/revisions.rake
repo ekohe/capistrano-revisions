@@ -12,7 +12,10 @@ namespace :deploy do
         XML_TMP_FILE_PATH = "tmp/revisions_#{fetch(:cr_env)}.xml"
         EMAIL_FILE_PATH = "#{shared_path}/log/revisions_email_#{fetch(:cr_env)}.html"
         EMAIL_TMP_FILE_PATH = "tmp/revisions_email_#{fetch(:cr_env)}.html"
+        HISTORY_PATH = "#{shared_path}/log/revisions_#{fetch(:cr_env)}.yml"
+
         begin
+          create_structured_deployment_history
           create_revisions_history_file
           send_email
           create_revisions_history_xml_file
@@ -80,6 +83,26 @@ namespace :deploy do
 
     def create_redmine_wiki_from_xml_file
         execute "curl -s -H 'Content-Type: application/xml' -X PUT --data-binary '@#{XML_FILE_PATH}' -H 'X-Redmine-API-Key: #{fetch(:cr_redmine_key)}' #{fetch(:cr_redmine_url)}"
+    end
+
+    #
+    # to be used for front-end presentation
+    #
+    def create_structured_deployment_history
+      last_release = capture "ls -t1 #{releases_path} | head -1"
+      last_revision = capture "cat #{releases_path}/#{last_release}/REVISION"
+
+      run_locally do
+        git_log = capture "git log #{last_revision}..#{fetch(:branch)} --no-merges --pretty=format:'%s'"
+        set :git_log, git_log
+      end
+
+      execute "[[ -f #{HISTORY_PATH} ]] || echo -e '---' > #{TXT_FILE_PATH}"
+      execute "echo #{Time.now.to_s}: >> #{HISTORY_PATH}"
+
+      fetch(:git_log).split("\n").each do |msg|
+        execute "echo '  - #{msg.dump}' >> #{HISTORY_PATH}"
+      end
     end
   end
 end

@@ -24,11 +24,9 @@ namespace :deploy do
     end
 
     def create_revisions_history_file
-      last_release = capture "ls -t1 #{releases_path} | head -1"
-      last_revision = capture "cat #{releases_path}/#{last_release}/REVISION"
       revision = capture "cat #{current_path}/REVISION"
       run_locally do
-        git_log = capture "git log #{last_revision}..#{revision} --pretty=format:'%ad %an %h  %s' --date=short"
+        git_log = capture "git log #{revision}..#{fetch(:cr_branch)} --pretty=format:'%ad %an %h  %s' --date=short"
         set :git_log, git_log
       end
       execute "[[ -f #{TXT_FILE_PATH} ]] || echo -e '#{fetch(:cr_env).capitalize} deployment history' > #{TXT_FILE_PATH}"

@@ -15,28 +15,26 @@ namespace :deploy do
         HISTORY_PATH = "#{shared_path}/log/revisions_#{fetch(:cr_env)}.yml"
 
         begin
+          prepare_deployment_info
           create_structured_deployment_history
           create_revisions_history_file
           send_email
           create_revisions_history_xml_file
           create_redmine_wiki_from_xml_file
-        rescue
-          puts "Error: failed to create revision notification"
+        rescue Exception => e
+          puts 'FATAL: failed to create revision notification'
+          puts e.message
         end
       end
     end
 
     def create_revisions_history_file
-      last_release = capture "ls -t1 #{releases_path} | head -1"
-      last_revision = capture "cat #{releases_path}/#{last_release}/REVISION"
-      run_locally do
-        git_log = capture "git log #{last_revision}..#{fetch(:branch)} --pretty=format:'%ad %an %h  %s' --date=short"
-        set :git_log, git_log
-      end
       execute "[[ -f #{TXT_FILE_PATH} ]] || echo -e '#{fetch(:cr_env).capitalize} deployment history' > #{TXT_FILE_PATH}"
       execute "echo '#{Time.now.strftime('%d-%m-%Y')}' >> #{TXT_FILE_PATH}"
-      fetch(:git_log).split("\n").each do |commit|
-        execute "echo -e \"#{commit}\" >> #{TXT_FILE_PATH}"
+      execute "echo '' >> #{TXT_FILE_PATH}"
+
+      fetch(:deploy_log).each do |msg|
+        execute "echo -e \"#{msg}\" >> #{TXT_FILE_PATH}"
       end
     end
 
@@ -50,7 +48,7 @@ namespace :deploy do
       revisions_email.truncate(0)
       revisions_email.write("<p>Environment: #{fetch(:cr_env)}</p>")
       revisions_email.write("Commits in this deployment:<ol>")
-      fetch(:git_log).each_line do |line|
+      fetch(:deploy_log).each do |line|
         revisions_email.write("<li>#{line}</li>")
       end
       revisions_email.write("</ol>")
@@ -89,19 +87,47 @@ namespace :deploy do
     # to be used for front-end presentation
     #
     def create_structured_deployment_history
-      last_release = capture "ls -t1 #{releases_path} | head -1"
-      last_revision = capture "cat #{releases_path}/#{last_release}/REVISION"
+      execute "[[ -f #{HISTORY_PATH} ]] || echo -e '---' > #{HISTORY_PATH}"
+      execute "echo '#{Time.now.to_s}:' >> #{HISTORY_PATH}"
 
-      run_locally do
-        git_log = capture "git log #{last_revision}..#{fetch(:branch)} --no-merges --pretty=format:'%s'"
-        set :git_log, git_log
+      fetch(:deploy_log).each do |msg|
+        execute <<-CMD
+          echo "  - \'#{msg.gsub(/['"`]/, '')}\'" >> #{HISTORY_PATH}
+        CMD
+      end
+    end
+
+    def _awesome(sha1, sha2)
+      base = `git merge-base #{sha1} #{sha2}`.chomp
+
+      if base.start_with?(sha1)
+        action = 'deployed'
+        commits_range = [sha1, sha2].join('..')
+      elsif base.start_with?(sha2)
+        action = 'reverted'
+        commits_range = [sha2, sha1].join('..')
+      else
+        # NOTE: This should not happen cause you MUST have a common ancestor
+        # when deploy new stuff to the server but anyway
+        action = 'YOUR BRANCH IS DIVERGED'
+        commits_range = 'HEAD..HEAD'
       end
 
-      execute "[[ -f #{HISTORY_PATH} ]] || echo -e '---' > #{TXT_FILE_PATH}"
-      execute "echo #{Time.now.to_s}: >> #{HISTORY_PATH}"
+      [action, commits_range]
+    end
 
-      fetch(:git_log).split("\n").each do |msg|
-        execute "echo '  - #{msg.dump}' >> #{HISTORY_PATH}"
+    def prepare_deployment_info
+      last_release = capture "ls -t1 #{releases_path} | head -1"
+      last_revision = capture "cat #{releases_path}/#{last_release}/REVISION"
+      current_revision = fetch(:branch)
+      action, commits_range = _awesome(last_revision, current_revision)
+
+      run_locally do
+        raw_log = capture("git log #{commits_range} --no-merges --pretty=format:'%s'")
+        deploy_log = raw_log.split("\n").map { |l| l.gsub(/['"`]/, '') }
+        deploy_description = "#{action} #{deploy_log.size} commit(s)"
+
+        set :deploy_log, deploy_log.unshift(deploy_description)
       end
     end
   end

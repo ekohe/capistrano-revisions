@@ -44,6 +44,7 @@ namespace :deploy do
     end
 
     def create_email_file
+      execute 'mkdir -p tmp'
       revisions_email = File.open(EMAIL_TMP_FILE_PATH,'w')
       revisions_email.truncate(0)
       revisions_email.write("<p>Environment: #{fetch(:cr_env)}</p>")
@@ -58,6 +59,7 @@ namespace :deploy do
     end
 
     def create_revisions_history_xml_file
+      execute 'mkdir -p tmp'
       revisions_xml = File.open(XML_TMP_FILE_PATH,'w')
       revisions_xml.truncate(0)
       revisions_xml.write("<?xml version='1.0'?>\n")

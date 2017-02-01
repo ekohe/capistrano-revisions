@@ -15,12 +15,7 @@ Set your configuration variables in deploy.rb
 
     set :cr_email, 'user@email.com' #who will receive the notification emails
     set :cr_redmine_key, 'XXXXXXXXXXXX'
-
-You probably wanna vary this depending on your stage so put inside staging.rb / production.rb etc
-
-    set :cr_env, 'production' #name of the stage you are deploying to
-    set :cr_branch, 'master' #name of the branch to compare revision to
-    set :cr_redmine_url, 'https://redmine.com/projects/project_name/revisions_#{fetch:revision_deployment_environment}.xml' # so you don't overwrite your staging deployment history when you deploy to production :doge:
+    set :cr_redmine_url, 'https://redmine.com/projects/project_name/revisions_#{fetch:stage}.xml' # so you don't overwrite your staging deployment history when you deploy to production :doge:
 
 And then execute:
 
@@ -29,6 +24,10 @@ And then execute:
 Or install it yourself as:
 
     $ gem install capistrano-revisions
+
+Make sure your application has a tmp directory on the server.  You may need to create it in your shared directory and then symlink it over
+
+    set :linked_dirs, %w{tmp}
 
 ## Usage
 

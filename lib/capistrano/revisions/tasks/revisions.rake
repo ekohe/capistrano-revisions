@@ -7,12 +7,12 @@ namespace :deploy do
   namespace :revisions do
     task :create do
       on roles(:web) do |host|
-        TXT_FILE_PATH = "#{shared_path}/log/revisions_#{fetch(:cr_env)}.txt"
-        XML_FILE_PATH = "#{shared_path}/log/revisions_#{fetch(:cr_env)}.xml"
-        XML_TMP_FILE_PATH = "tmp/revisions_#{fetch(:cr_env)}.xml"
-        EMAIL_FILE_PATH = "#{shared_path}/log/revisions_email_#{fetch(:cr_env)}.html"
-        EMAIL_TMP_FILE_PATH = "tmp/revisions_email_#{fetch(:cr_env)}.html"
-        HISTORY_PATH = "#{shared_path}/log/revisions_#{fetch(:cr_env)}.yml"
+        TXT_FILE_PATH = "#{shared_path}/log/revisions_#{fetch(:stage)}.txt"
+        XML_FILE_PATH = "#{shared_path}/log/revisions_#{fetch(:stage)}.xml"
+        XML_TMP_FILE_PATH = "tmp/revisions_#{fetch(:stage)}.xml"
+        EMAIL_FILE_PATH = "#{shared_path}/log/revisions_email_#{fetch(:stage)}.html"
+        EMAIL_TMP_FILE_PATH = "tmp/revisions_email_#{fetch(:stage)}.html"
+        HISTORY_PATH = "#{shared_path}/log/revisions_#{fetch(:stage)}.yml"
 
         begin
           prepare_deployment_info
@@ -29,7 +29,7 @@ namespace :deploy do
     end
 
     def create_revisions_history_file
-      execute "[[ -f #{TXT_FILE_PATH} ]] || echo -e '#{fetch(:cr_env).capitalize} deployment history' > #{TXT_FILE_PATH}"
+      execute "[[ -f #{TXT_FILE_PATH} ]] || echo -e '#{fetch(:stage).capitalize} deployment history' > #{TXT_FILE_PATH}"
       execute "echo '#{Time.now.strftime('%d-%m-%Y')}' >> #{TXT_FILE_PATH}"
       execute "echo '' >> #{TXT_FILE_PATH}"
 
@@ -40,14 +40,14 @@ namespace :deploy do
 
     def send_email
       create_email_file
-      execute "cat #{EMAIL_FILE_PATH} | mail -a 'Content-type: text/html;' -s 'Deployment Notifier: #{fetch(:application)} has just been deployed to #{fetch(:cr_env)} server' #{fetch(:cr_email)}"
+      execute "cat #{EMAIL_FILE_PATH} | mail -a 'Content-type: text/html;' -s 'Deployment Notifier: #{fetch(:application)} has just been deployed to #{fetch(:stage)} server' #{fetch(:cr_email)}"
     end
 
     def create_email_file
       execute 'mkdir -p tmp'
       revisions_email = File.open(EMAIL_TMP_FILE_PATH,'w')
       revisions_email.truncate(0)
-      revisions_email.write("<p>Environment: #{fetch(:cr_env)}</p>")
+      revisions_email.write("<p>Environment: #{fetch(:stage)}</p>")
       revisions_email.write("Commits in this deployment:<ol>")
       fetch(:deploy_log).each do |line|
         revisions_email.write("<li>#{line}</li>")
